@@ -3,13 +3,12 @@ const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const { getRandomMovie } = require('./randomFilm');
 
 app.use(cors());
 
 const server = http.createServer(app);
-
 const io = new Server(server, {
-  connectionStateRecovery: {},
   cors: {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST'],
@@ -22,62 +21,87 @@ const rooms = {};
 io.on('connection', (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
-  socket.on('join_room', (userId, roomId) => {
+  socket.on('join_room', async (userId, roomId) => {
     if (!rooms[roomId]) {
       rooms[roomId] = [];
     }
 
     if (rooms[roomId].length >= 2) {
-      // Если в комнате уже 2 пользователя, отправляем сообщение об ошибке
       socket.emit('room_full', {
         message: 'Комната заполнена, максимум 2 пользователя',
       });
       return;
     }
+
     rooms[roomId].push(userId);
 
     if (!users[userId]) {
       users[userId] = { likedMovies: [], matches: [] };
     }
 
+    socket.join(roomId);
     socket.emit('user_joined', {
-      message: `Вы подключились к комнате  ${roomId} `,
+      message: `Пользователь ${userId} подключился`,
     });
 
-    console.log(`${userId},${roomId} data`);
-    socket.join(roomId);
+    // Отправляем случайный фильм при присоединении пользователя
+    const randomMovie = await getRandomMovie();
+    io.to(roomId).emit('show_movie', randomMovie);
   });
 
-  socket.on('like_movie', (userId, roomId, movieId) => {
+  socket.on('like_movie', async (userId, roomId, movieId) => {
     if (!users[userId]) {
       users[userId] = { likedMovies: [], matches: [] };
+      console.log(users);
     }
-
-    // Добавляем фильм в список понравившихся
+    console.log(movieId);
     users[userId].likedMovies.push(movieId);
-    console.log(`User ${userId} liked movie ${movieId}`);
-
-    // Проверяем второго пользователя в комнате
+    console.log(users[userId].likedMovies.push(movieId));
     const otherUserId = rooms[roomId].find((id) => id !== userId);
 
-    if (otherUserId && users[otherUserId].likedMovies.includes(movieId)) {
-      // Если оба пользователя лайкнули один и тот же фильм, то это "match"
-      io.to(roomId).emit('match', {
-        message: `Match! Оба пользователя лайкнули фильм ${movieId}`,
-        movieId,
-      });
-
-      // Сохраняем информацию о совпадении
-      users[userId].matches.push(movieId);
-      users[otherUserId].matches.push(movieId);
+    if (
+      otherUserId &&
+      users[otherUserId] &&
+      users[otherUserId].likedMovies.includes(movieId)
+    ) {
+      io.to(roomId).emit('match', movieId);
     }
+
+    // Отправляем новый случайный фильм после лайка
+    // const newRandomMovie = await getRandomMovie();
+    // io.to(roomId).emit('show_movie', newRandomMovie);
   });
 
+  // socket.on('skip_movie', async (userId, roomId) => {
+  //   // Отправляем новый случайный фильм после пропуска
+  //   const newRandomMovie = await getRandomMovie();
+  //   io.to(roomId).emit('show_movie', newRandomMovie);
+  // });
+
+  // socket.on('disconnect', () => {
+  //   for (const roomId in rooms) {
+  //     rooms[roomId] = rooms[roomId].filter((user) => user !== socket.id);
+  //   }
+  // });
   socket.on('disconnect', () => {
+    // Удаление пользователя из всех комнат
     for (const roomId in rooms) {
       rooms[roomId] = rooms[roomId].filter((user) => user !== socket.id);
-      console.log(`User ${socket.id} disconnected from room ${roomId}`);
+      if (rooms[roomId].length === 0) {
+        // Если комната пустая, можно удалить её
+        delete rooms[roomId];
+      }
     }
+
+    // Удаление информации о пользователе
+    for (const userId in users) {
+      if (users[userId].socketId === socket.id) {
+        delete users[userId];
+        break;
+      }
+    }
+
+    console.log(`User ${socket.id} disconnected`);
   });
 });
 
