@@ -6,8 +6,12 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const { getRandomMovie } = require('./randomFilm');
 
-app.use(cors());
-const corsOrigin = 'http://localhost:3000';
+const corsOrigin = 'https://your-frontend-app-url.com';
+app.use(
+  cors({
+    origin: corsOrigin,
+  })
+);
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
