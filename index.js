@@ -7,7 +7,7 @@ const cors = require('cors');
 const { getRandomMovie } = require('./randomFilm');
 
 app.use(cors());
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
+const corsOrigin = 'http://localhost:3000';
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
