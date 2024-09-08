@@ -7,11 +7,11 @@ const cors = require('cors');
 const { getRandomMovie } = require('./randomFilm');
 
 app.use(cors());
-const corsOrigin = 'http://localhost:3000';
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: corsOrigin,
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     methods: ['GET', 'POST'],
   },
 });
@@ -103,7 +103,7 @@ io.on('connection', (socket) => {
     console.log(`User ${socket.id} disconnected`);
   });
 });
-
-server.listen(3001, () => {
-  console.log('SERVER IS RUNNING');
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`SERVER IS RUNNING ON PORT ${PORT}`);
 });
