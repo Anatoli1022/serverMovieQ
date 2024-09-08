@@ -1,7 +1,6 @@
-const { NEXT_API_MOVIE_KEY } = require('./key');
 
 async function fetchMovieData(endpoint, additionalPath = '', page = 1) {
-  const apiKey = NEXT_API_MOVIE_KEY;
+  const apiKey = process.env.NEXT_API_MOVIE_KEY;
   const url = `https://api.themoviedb.org/3/movie/${endpoint}${additionalPath}?language=en-US&page=${page}`;
 
   const options = {
