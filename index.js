@@ -45,26 +45,29 @@ io.on('connection', (socket) => {
     });
 
     // Отправляем случайный фильм при присоединении пользователя
-    const randomMovie = await getRandomMovie();
-    io.to(roomId).emit('show_movie', randomMovie);
+    if (rooms[roomId].length == 2) {
+      const randomMovie = await getRandomMovie();
+      io.to(roomId).emit('show_movie', randomMovie);
+    }
   });
 
-  socket.on('like_movie', async (userId, roomId, movieId) => {
+  socket.on('like_movie', async (userId, roomId, movie) => {
     if (!users[userId]) {
       users[userId] = { likedMovies: [], matches: [] };
-      console.log(users);
     }
-    console.log(movieId);
-    users[userId].likedMovies.push(movieId);
-    console.log(users[userId].likedMovies.push(movieId));
+
+    users[userId].likedMovies.push(movie);
+
     const otherUserId = rooms[roomId].find((id) => id !== userId);
 
     if (
       otherUserId &&
       users[otherUserId] &&
-      users[otherUserId].likedMovies.includes(movieId)
+      users[otherUserId].likedMovies.some(
+        (likedMovie) => likedMovie.id === movie.id
+      )
     ) {
-      io.to(roomId).emit('match', movieId);
+      io.to(roomId).emit('match', movie);
     }
 
     // Отправляем новый случайный фильм после лайка
@@ -78,11 +81,6 @@ io.on('connection', (socket) => {
   //   io.to(roomId).emit('show_movie', newRandomMovie);
   // });
 
-  // socket.on('disconnect', () => {
-  //   for (const roomId in rooms) {
-  //     rooms[roomId] = rooms[roomId].filter((user) => user !== socket.id);
-  //   }
-  // });
   socket.on('disconnect', () => {
     // Удаление пользователя из всех комнат
     for (const roomId in rooms) {
