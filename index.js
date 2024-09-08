@@ -6,7 +6,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const { getRandomMovie } = require('./randomFilm');
 
-const corsOrigin = 'https://your-frontend-app-url.com';
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
 app.use(
   cors({
     origin: corsOrigin,
@@ -49,6 +49,7 @@ io.on('connection', (socket) => {
       message: `Пользователь ${userId} подключился`,
     });
 
+    // Отправляем случайный фильм при присоединении пользователя
     if (rooms[roomId].length == 2) {
       const randomMovie = await getRandomMovie();
       io.to(roomId).emit('show_movie', randomMovie);
@@ -73,16 +74,29 @@ io.on('connection', (socket) => {
     ) {
       io.to(roomId).emit('match', movie);
     }
+
+    // Отправляем новый случайный фильм после лайка
+    // const newRandomMovie = await getRandomMovie();
+    // io.to(roomId).emit('show_movie', newRandomMovie);
   });
 
+  // socket.on('skip_movie', async (userId, roomId) => {
+  //   // Отправляем новый случайный фильм после пропуска
+  //   const newRandomMovie = await getRandomMovie();
+  //   io.to(roomId).emit('show_movie', newRandomMovie);
+  // });
+
   socket.on('disconnect', () => {
+    // Удаление пользователя из всех комнат
     for (const roomId in rooms) {
       rooms[roomId] = rooms[roomId].filter((user) => user !== socket.id);
       if (rooms[roomId].length === 0) {
+        // Если комната пустая, можно удалить её
         delete rooms[roomId];
       }
     }
 
+    // Удаление информации о пользователе
     for (const userId in users) {
       if (users[userId].socketId === socket.id) {
         delete users[userId];
@@ -93,8 +107,7 @@ io.on('connection', (socket) => {
     console.log(`User ${socket.id} disconnected`);
   });
 });
-
-const port = process.env.PORT || 3001;
-server.listen(port, () => {
-  console.log(`SERVER IS RUNNING ON PORT ${port}`);
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`SERVER IS RUNNING ON PORT ${PORT}`);
 });
