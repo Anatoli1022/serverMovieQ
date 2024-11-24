@@ -5,7 +5,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const { getRandomMovie } = require('./randomFilm');
-
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
 app.use(
   cors({
@@ -76,15 +75,15 @@ io.on('connection', (socket) => {
     }
 
     // Отправляем новый случайный фильм после лайка
-    // const newRandomMovie = await getRandomMovie();
-    // io.to(roomId).emit('show_movie', newRandomMovie);
+    const newRandomMovie = await getRandomMovie();
+    io.to(roomId).emit('show_movie', newRandomMovie);
   });
 
-  // socket.on('skip_movie', async (userId, roomId) => {
-  //   // Отправляем новый случайный фильм после пропуска
-  //   const newRandomMovie = await getRandomMovie();
-  //   io.to(roomId).emit('show_movie', newRandomMovie);
-  // });
+  socket.on('skip_movie', async (userId, roomId) => {
+    // Отправляем новый случайный фильм после пропуска
+    const newRandomMovie = await getRandomMovie();
+    io.to(roomId).emit('show_movie', newRandomMovie);
+  });
 
   socket.on('disconnect', () => {
     // Удаление пользователя из всех комнат
