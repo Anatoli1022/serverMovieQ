@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
     });
 
     // Отправляем случайный фильм при присоединении пользователя
-    if (rooms[roomId].length == 2) {
+    if (rooms[roomId].length >= 2) {
       const randomMovie = await getRandomMovie();
       io.to(roomId).emit('show_movie', randomMovie);
     }
@@ -69,15 +69,15 @@ io.on('connection', (socket) => {
       otherUserId &&
       users[otherUserId] &&
       users[otherUserId].likedMovies.some(
-        (likedMovie) => likedMovie.id === movie.id
+        (likedMovie) => likedMovie.id == movie.id
       )
     ) {
       io.to(roomId).emit('match', movie);
     }
 
-    // Отправляем новый случайный фильм после лайка
-    const newRandomMovie = await getRandomMovie();
-    io.to(roomId).emit('show_movie', newRandomMovie);
+    // Отправляем новый случайный фильм после лайка зачеееееееееееем, delete pleaseeeeeeeeeeeeeeeeee
+    // const newRandomMovie = await getRandomMovie();
+    // io.to(users[userId]).emit('show_movie', newRandomMovie);
   });
 
   socket.on('skip_movie', async (userId, roomId) => {
