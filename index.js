@@ -52,7 +52,8 @@ io.on('connection', (socket) => {
     // Отправляем случайный фильм при присоединении пользователя
     if (rooms[roomId].length >= 2) {
       const randomMovie = await getRandomMovie();
-      io.to(roomId).emit('show_movie', randomMovie);
+
+      io.to(roomId).emit('show_movie', randomMovie.results);
     }
   });
 
@@ -74,10 +75,6 @@ io.on('connection', (socket) => {
     ) {
       io.to(roomId).emit('match', movie);
     }
-
-    // Отправляем новый случайный фильм после лайка зачеееееееееееем, delete pleaseeeeeeeeeeeeeeeeee
-    // const newRandomMovie = await getRandomMovie();
-    // io.to(users[userId]).emit('show_movie', newRandomMovie);
   });
 
   socket.on('skip_movie', async (userId, roomId) => {
