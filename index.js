@@ -33,7 +33,7 @@ io.on('connection', (socket) => {
 
     if (rooms[roomId].length >= 2) {
       socket.emit('room_full', {
-        message: 'Комната заполнена, максимум 2 пользователя',
+        message: 'Pokój jest pełny, maksymalnie 2 użytkowników',
       });
       return;
     }
@@ -46,10 +46,10 @@ io.on('connection', (socket) => {
 
     socket.join(roomId);
     socket.emit('user_joined', {
-      message: `Пользователь ${userId} подключился`,
+      message: `Użytkownik ${userId} podłączył się`,
     });
 
-    // Отправляем случайный фильм при присоединении пользователя
+    // Wyślij losowy film, gdy użytkownik dołączy
     if (rooms[roomId].length >= 2) {
       const randomMovie = await getRandomMovie();
 
@@ -78,22 +78,22 @@ io.on('connection', (socket) => {
   });
 
   socket.on('skip_movie', async (userId, roomId) => {
-    // Отправляем новый случайный фильм после пропуска
+    // Wysyłanie nowego losowego filmu po pominięciu
     const newRandomMovie = await getRandomMovie();
     io.to(roomId).emit('show_movie', newRandomMovie);
   });
 
   socket.on('disconnect', () => {
-    // Удаление пользователя из всех комнат
+    // Usuwanie użytkownika ze wszystkich pokoi
     for (const roomId in rooms) {
       rooms[roomId] = rooms[roomId].filter((user) => user !== socket.id);
       if (rooms[roomId].length === 0) {
-        // Если комната пустая, можно удалить её
+        // Jeśli pokój jest pusty, możesz go usunąć
         delete rooms[roomId];
       }
     }
 
-    // Удаление информации о пользователе
+    // Usuwanie informacji o użytkowniku
     for (const userId in users) {
       if (users[userId].socketId === socket.id) {
         delete users[userId];
